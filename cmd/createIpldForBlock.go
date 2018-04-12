@@ -24,8 +24,8 @@ import (
 
 	"github.com/8thlight/block_watcher/pkg"
 	"github.com/8thlight/block_watcher/pkg/db"
-	"github.com/8thlight/block_watcher/pkg/fs"
 	"github.com/8thlight/block_watcher/pkg/ipfs"
+	"github.com/8thlight/block_watcher/pkg/ipfs/eth_block_header"
 )
 
 // createIpldForBlockCmd represents the createIpldForBlock command
@@ -80,9 +80,13 @@ func createIpldForBlock() {
 	}
 
 	// init ipfs publisher
-	blockWriter := fs.NewBlockFileWriter(fs.FileCreator{}, fs.FileWriter{})
-	ipfsWriter := ipfs.NewIpfsEthBlockWriter(fs.ExecCommander{})
-	publisher := ipfs.NewIpfsPublisher(blockWriter, ipfsWriter)
+	ipfsNode, err := ipfs.InitIPFSNode(ipfsPath)
+	if err != nil {
+		log.Fatal("Error connecting to IPFS: ", err)
+	}
+	decoder := ipfs.RlpDecoder{}
+	dagPutter := eth_block_header.NewBlockHeaderDagPutter(*ipfsNode, decoder)
+	publisher := ipfs.NewIpfsPublisher(dagPutter)
 
 	// execute transformer
 	transformer := pkg.NewTransformer(blockRepository, ethDB, publisher)

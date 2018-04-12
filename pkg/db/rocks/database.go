@@ -9,11 +9,11 @@ import (
 )
 
 type RocksDatabase struct {
-	decoder Decoder
+	decoder Decompressor
 	reader  Reader
 }
 
-func NewRocksDatabase(decoder Decoder, reader Reader) *RocksDatabase {
+func NewRocksDatabase(decoder Decompressor, reader Reader) *RocksDatabase {
 	return &RocksDatabase{
 		decoder: decoder,
 		reader:  reader,
@@ -26,7 +26,7 @@ func (r *RocksDatabase) Get(block core.Block) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.decoder.Decode(toReturn)
+	result, err := r.decoder.Decompress(toReturn)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Could not decode data: %s", err.Error()))
 	}

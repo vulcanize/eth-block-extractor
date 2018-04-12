@@ -44,11 +44,11 @@ func (t Transformer) Execute(startingBlockNumber int64, endingBlockNumber int64)
 		if err != nil {
 			return NewExecuteError(GetBlockRlpErr, err)
 		}
-		output, err := t.Publisher.Write(blockData, block.Number)
+		output, err := t.Publisher.Write(blockData)
 		if err != nil {
 			return NewExecuteError(PutIpldErr, err)
 		}
-		log.Printf("Created IPLD: %s", string(output))
+		log.Printf("Created IPLD: %s", output)
 	}
 	return nil
 }

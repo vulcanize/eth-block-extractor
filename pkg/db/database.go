@@ -36,7 +36,7 @@ func CreateDatabase(config DatabaseConfig) (Database, error) {
 		levelDB := level.NewLevelDatabase(levelDBReader)
 		return levelDB, nil
 	case Rocks:
-		decoder := rocks.EthBlockHeaderDecoder{}
+		decoder := rocks.EthBlockHeaderDecompressor{}
 		reader := rocks.RDBReader{}
 		reader.OpenDatabaseForReadOnlyColumnFamilies(config.Path)
 		rocksDb := rocks.NewRocksDatabase(decoder, &reader)

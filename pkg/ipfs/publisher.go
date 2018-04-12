@@ -1,9 +1,6 @@
 package ipfs
 
-import (
-	"fmt"
-	"github.com/8thlight/block_watcher/pkg/fs"
-)
+import "fmt"
 
 type IpfsError struct {
 	msg string
@@ -15,26 +12,21 @@ func (ie IpfsError) Error() string {
 }
 
 type Publisher interface {
-	Write(blockData []byte, blockNumber int64) ([]byte, error)
+	Write(blockData []byte) (string, error)
 }
 
 type IpfsPublisher struct {
-	fs.BlockWriter
-	IpfsWriter
+	DagPutter
 }
 
-func NewIpfsPublisher(fileWriter fs.BlockWriter, ipfsWriter IpfsWriter) *IpfsPublisher {
-	return &IpfsPublisher{BlockWriter: fileWriter, IpfsWriter: ipfsWriter}
+func NewIpfsPublisher(dagPutter DagPutter) *IpfsPublisher {
+	return &IpfsPublisher{DagPutter: dagPutter}
 }
 
-func (ip *IpfsPublisher) Write(blockData []byte, blockNumber int64) ([]byte, error) {
-	filename, err := ip.BlockWriter.WriteBlockFile(blockData, blockNumber)
+func (ip *IpfsPublisher) Write(blockData []byte) (string, error) {
+	output, err := ip.DagPutter.DagPut(blockData)
 	if err != nil {
-		return nil, IpfsError{msg: "Error writing block data", err: err}
-	}
-	output, err := ip.IpfsWriter.WriteToIpfs(filename)
-	if err != nil {
-		return nil, IpfsError{msg: "Error persisting block data", err: err}
+		return "", err
 	}
 	return output, nil
 }

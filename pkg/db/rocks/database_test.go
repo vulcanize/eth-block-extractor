@@ -14,7 +14,7 @@ import (
 
 var _ = Describe("Rocks database", func() {
 	It("fetches block data from the reader with converted block hash", func() {
-		decoder := test_helpers.NewMockDecoder()
+		decoder := test_helpers.NewMockDecompressor()
 		reader := test_helpers.NewMockRocksDatabaseReader()
 		rocksDB := rocks.NewRocksDatabase(decoder, reader)
 		hash := "0xHash"
@@ -31,7 +31,7 @@ var _ = Describe("Rocks database", func() {
 	})
 
 	It("returns error if reader returns error", func() {
-		decoder := test_helpers.NewMockDecoder()
+		decoder := test_helpers.NewMockDecompressor()
 		reader := test_helpers.NewMockRocksDatabaseReader()
 		fakeErr := errors.New("Failed")
 		reader.SetError(fakeErr)
@@ -45,7 +45,7 @@ var _ = Describe("Rocks database", func() {
 	})
 
 	It("decodes block data returned by the reader", func() {
-		decoder := test_helpers.NewMockDecoder()
+		decoder := test_helpers.NewMockDecompressor()
 		reader := test_helpers.NewMockRocksDatabaseReader()
 		bytesToDecode := []byte{1, 2, 3, 4, 5}
 		reader.SetReturnBytes(bytesToDecode)

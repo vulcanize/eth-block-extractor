@@ -92,7 +92,6 @@ var _ = Describe("Transformer", func() {
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mockPublisher.CalledCount).To(Equal(1))
-			Expect(mockPublisher.PassedBlockNumbers).To(ConsistOf(fakeBlock.Number))
 			Expect(mockPublisher.PassedBlockDatas[0]).To(Equal(fakeBytes))
 		})
 
@@ -173,11 +172,6 @@ var _ = Describe("Transformer", func() {
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mockPublisher.CalledCount).To(Equal(numBlocks))
-			var blockNumbers []int64
-			for i := 0; i < numBlocks; i++ {
-				blockNumbers = append(blockNumbers, fakeBlocks[i].Number)
-			}
-			Expect(mockPublisher.PassedBlockNumbers).To(ConsistOf(blockNumbers))
 			Expect(mockPublisher.PassedBlockDatas).To(ConsistOf(allFakeRlpBytes))
 		})
 	})

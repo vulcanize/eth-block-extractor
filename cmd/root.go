@@ -28,6 +28,7 @@ var (
 	cfgFile        string
 	databaseConfig config.Database
 	ipc            string
+	ipfsPath       string
 	levelDbPath    string
 	rocksDbPath    string
 )
@@ -50,6 +51,7 @@ func database(cmd *cobra.Command, args []string) {
 	ipc = viper.GetString("client.ipcpath")
 	levelDbPath = viper.GetString("client.leveldbpath")
 	rocksDbPath = viper.GetString("client.rocksdbpath")
+	ipfsPath = viper.GetString("client.ipfspath")
 	databaseConfig = config.Database{
 		Name:     viper.GetString("database.name"),
 		Hostname: viper.GetString("database.hostname"),
@@ -66,6 +68,7 @@ func init() {
 	rootCmd.PersistentFlags().Int("database-port", 5432, "database port")
 	rootCmd.PersistentFlags().String("database-hostname", "localhost", "database hostname")
 	rootCmd.PersistentFlags().String("client-ipcPath", "", "location of geth.ipc file")
+	rootCmd.PersistentFlags().String("client-ipfsPath", "", "location of ipfs directory")
 	rootCmd.PersistentFlags().String("client-levelDbPath", "", "location of levelDb chaindata")
 	rootCmd.PersistentFlags().String("client-rocksDbPath", "", "location of rocksDb chaindata")
 
@@ -73,6 +76,7 @@ func init() {
 	viper.BindPFlag("database.port", rootCmd.PersistentFlags().Lookup("database-port"))
 	viper.BindPFlag("database.hostname", rootCmd.PersistentFlags().Lookup("database-hostname"))
 	viper.BindPFlag("client.ipcPath", rootCmd.PersistentFlags().Lookup("client-ipcPath"))
+	viper.BindPFlag("client.ipfsPath", rootCmd.PersistentFlags().Lookup("client-ipfsPath"))
 	viper.BindPFlag("client.levelDbPath", rootCmd.PersistentFlags().Lookup("client-levelDbPath"))
 	viper.BindPFlag("client.rocksDbPath", rootCmd.PersistentFlags().Lookup("client-rocksDbPath"))
 
