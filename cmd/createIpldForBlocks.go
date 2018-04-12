@@ -49,6 +49,7 @@ func init() {
 	rootCmd.AddCommand(createIpldForBlocksCmd)
 	createIpldForBlocksCmd.Flags().Int64VarP(&startingBlockNumber, "starting-block-number", "s", 0, "First block number to create IPLD for")
 	createIpldForBlocksCmd.Flags().Int64VarP(&endingBlockNumber, "ending-block-number", "e", 5430000, "Last block number to create IPLD for")
+	createIpldForBlocksCmd.Flags().BoolVarP(&useParity, "parity", "p", false, "Use Parity's Rocks DB instead of Geth's Level DB")
 }
 
 func createIpldForBlocks() {
@@ -68,7 +69,12 @@ func createIpldForBlocks() {
 	blockRepository := repositories.BlockRepository{DB: pgDB}
 
 	// init eth db
-	ethDBConfig := db.CreateDatabaseConfig(db.Level, levelDbPath)
+	var ethDBConfig db.DatabaseConfig
+	if useParity {
+		ethDBConfig = db.CreateDatabaseConfig(db.Rocks, rocksDbPath)
+	} else {
+		ethDBConfig = db.CreateDatabaseConfig(db.Level, levelDbPath)
+	}
 	ethDB, err := db.CreateDatabase(ethDBConfig)
 	if err != nil {
 		log.Fatal("Error connecting to ethereum db: ", err)

@@ -32,16 +32,21 @@ A [VulcanizeDB](https://github.com/vulcanize/VulcanizeDB) transformer for creati
     - The default location is:
       - Mac: `$HOME/Library/Ethereum`
       - Linux: `$HOME/.ethereum`
+  - when using parity:
+    - The RocksDB file is called `db`.
+    - The default location on Mac is: `/Users/$USER/Library/Application Support/io.parity.ethereum/chains/ethereum/db/906a34e69aec8c0d/overlayrecent/db`
 
 ## Running the createIpldForBlock command
 - This command creates an IPLD object for a single Ethereum block.
 - `./block_watcher createIpldForBlock --config <config.toml> --block-number <block-number>`
-- Note: all arguments are required
+- Optionally, point at Parity's RocksDB instead of Geth's LevelDB with flag `-p`
+- Note: block number argument is required
 
 ## Running the createIpldForBlocks command
 - This command creates IPLDs objects for every block in a range of Ethereum blocks.
 - `./block_watcher createIpldForBlocks --config <config.toml> --starting-block-number <block-number> --ending-block-number <block-number>`
-- Note: all arguments are required, and ending block number must be greater than starting block number
+- Optionally, point at Parity's RocksDB instead of Geth's LevelDB with flag `-p`
+- Note: starting and ending block number arguments are required, and ending block number must be greater than starting block number
 
 ## Running the tests
 ```
@@ -50,3 +55,4 @@ ginkgo -r
 
 ## Errors
 - If you see the error, `Error executing transformer: Error writing to IPFS: Error persisting block data: exit status 1`, you probably still need to setup go-ipld-eth (see above).
+

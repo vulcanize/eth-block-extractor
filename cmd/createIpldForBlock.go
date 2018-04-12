@@ -19,13 +19,13 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
+	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres/repositories"
 	"github.com/vulcanize/vulcanizedb/pkg/geth"
 
 	"github.com/8thlight/block_watcher/pkg"
 	"github.com/8thlight/block_watcher/pkg/db"
 	"github.com/8thlight/block_watcher/pkg/fs"
 	"github.com/8thlight/block_watcher/pkg/ipfs"
-	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres/repositories"
 )
 
 // createIpldForBlockCmd represents the createIpldForBlock command
@@ -47,7 +47,8 @@ var blockNumber int64
 
 func init() {
 	rootCmd.AddCommand(createIpldForBlockCmd)
-	createIpldForBlockCmd.Flags().Int64VarP(&blockNumber, "block-number", "b", 0, "Block number to create IPLD for")
+	createIpldForBlockCmd.Flags().Int64VarP(&blockNumber, "block-number", "b", 0, "Create IPLD for this block")
+	createIpldForBlockCmd.Flags().BoolVarP(&useParity, "parity", "p", false, "Use Parity's RocksDB instead of Geth's LevelDB")
 }
 
 func createIpldForBlock() {
@@ -67,7 +68,12 @@ func createIpldForBlock() {
 	blockRepository := repositories.BlockRepository{DB: pgDB}
 
 	// init eth db
-	ethDBConfig := db.CreateDatabaseConfig(db.Level, levelDbPath)
+	var ethDBConfig db.DatabaseConfig
+	if useParity {
+		ethDBConfig = db.CreateDatabaseConfig(db.Rocks, rocksDbPath)
+	} else {
+		ethDBConfig = db.CreateDatabaseConfig(db.Level, levelDbPath)
+	}
 	ethDB, err := db.CreateDatabase(ethDBConfig)
 	if err != nil {
 		log.Fatal("Error connecting to ethereum db: ", err)

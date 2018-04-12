@@ -1,0 +1,116 @@
+package rocks
+
+import (
+	"bytes"
+	"encoding/binary"
+	"fmt"
+
+	"github.com/ethereum/go-ethereum/rlp"
+)
+
+// it appears that the first byte could be anywhere from 248-255 (0xf8 - 0xff)
+// https://github.com/ethereum/wiki/wiki/RLP
+// however, I've yet to see a block header where the first byte is not 249
+const ethBlockHeaderFirstByte = 249
+
+type Decoder interface {
+	Decode(raw []byte) ([]byte, error)
+}
+
+type EthBlockHeaderDecoder struct {
+}
+
+type decodeError struct {
+	msg string
+	err error
+}
+
+func (d decodeError) Error() string {
+	if d.err != nil {
+		return fmt.Sprintf("%s: %s", d.msg, d.err.Error())
+	} else {
+		return d.msg
+	}
+}
+
+func NewDecodeError(msg string, err error) *decodeError {
+	return &decodeError{
+		msg: msg,
+		err: err,
+	}
+}
+
+func (d EthBlockHeaderDecoder) Decode(raw []byte) ([]byte, error) {
+	if len(raw) == 0 {
+		return nil, NewDecodeError("No input to decode", nil)
+	}
+	if raw[0] != ethBlockHeaderFirstByte {
+		return nil, NewDecodeError(fmt.Sprintf("Received byte array not beginning with 249: %d", raw[0]), nil)
+	}
+	_, content, _, err := rlp.Split(raw)
+	if err != nil {
+		return nil, NewDecodeError("Error decoding header:", err)
+	}
+	result := []byte{}
+	keepIterating := true
+	for keepIterating {
+		if len(content) == 0 {
+			keepIterating = false
+			break
+		}
+		isCompressed, idx := isInvalidRLP(content[:2])
+		if isCompressed {
+			decompressed := getMatchingCommonRLP(idx)
+			result = append(result, decompressed...)
+			content = content[2:]
+		} else {
+			originalContent := content
+			var contentToAppend []byte
+			_, contentToAppend, content, err = rlp.Split(content)
+			if err != nil {
+				return nil, err
+			}
+			chunkHeader := getChunkHeaderData(originalContent, contentToAppend)
+			result = append(append(result, chunkHeader...), contentToAppend...)
+		}
+	}
+	rlpHeaderData := getRLPHeaderData(result)
+	result = append(rlpHeaderData, result...)
+	return result, nil
+}
+
+func getChunkHeaderData(original []byte, separator []byte) []byte {
+	split := bytes.Split(original, separator)
+	chunkHeader := split[0]
+	// maybe worth checking for more than one leading zero
+	if len(split[1]) > 0 && split[1][0] == 0 {
+		chunkHeader = append(chunkHeader, 0)
+	}
+	return chunkHeader
+}
+
+func getRLPHeaderData(result []byte) []byte {
+	rlpLength := len(result)
+	var bs []byte
+	bs = append(bs, ethBlockHeaderFirstByte)
+	tmp := make([]byte, 2)
+	binary.BigEndian.PutUint16(tmp, uint16(rlpLength))
+	bs = append(bs, tmp...)
+	return bs
+}
+
+func isInvalidRLP(data []byte) (bool, int) {
+	for i := 0; i < len(InvalidRLPs); i++ {
+		if bytes.Equal(data, InvalidRLPs[i]) {
+			return true, i
+		}
+	}
+	return false, 0
+}
+
+func getMatchingCommonRLP(idx int) []byte {
+	if idx < len(CommonRLPs) {
+		return CommonRLPs[idx]
+	}
+	return CommonRLPs[len(CommonRLPs)-1]
+}

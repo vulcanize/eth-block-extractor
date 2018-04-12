@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/8thlight/block_watcher/pkg/db/level"
+	"github.com/8thlight/block_watcher/pkg/db/rocks"
 	"github.com/ethereum/go-ethereum/ethdb"
 	vulcCore "github.com/vulcanize/vulcanizedb/pkg/core"
 )
@@ -35,7 +36,11 @@ func CreateDatabase(config DatabaseConfig) (Database, error) {
 		levelDB := level.NewLevelDatabase(levelDBReader)
 		return levelDB, nil
 	case Rocks:
-		return nil, ReadError{msg: "RocksDB not implemented", err: ErrNoSuchDb}
+		decoder := rocks.EthBlockHeaderDecoder{}
+		reader := rocks.RDBReader{}
+		reader.OpenDatabaseForReadOnlyColumnFamilies(config.Path)
+		rocksDb := rocks.NewRocksDatabase(decoder, &reader)
+		return rocksDb, nil
 	default:
 		return nil, ReadError{msg: "Unknown database not implemented", err: ErrNoSuchDb}
 	}
