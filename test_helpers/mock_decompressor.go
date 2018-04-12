@@ -1,19 +1,28 @@
 package test_helpers
 
-type MockDecmpressor struct {
+type MockDecompressor struct {
 	Called      bool
+	Err         error
 	PassedBytes []byte
 }
 
-func NewMockDecompressor() *MockDecmpressor {
-	return &MockDecmpressor{
+func NewMockDecompressor() *MockDecompressor {
+	return &MockDecompressor{
 		Called:      false,
+		Err:         nil,
 		PassedBytes: nil,
 	}
 }
 
-func (md *MockDecmpressor) Decompress(raw []byte) ([]byte, error) {
+func (md *MockDecompressor) SetError(err error) {
+	md.Err = err
+}
+
+func (md *MockDecompressor) Decompress(raw []byte) ([]byte, error) {
 	md.Called = true
 	md.PassedBytes = raw
+	if md.Err != nil {
+		return nil, md.Err
+	}
 	return nil, nil
 }

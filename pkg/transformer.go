@@ -6,7 +6,6 @@ import (
 
 	"github.com/8thlight/block_watcher/pkg/db"
 	"github.com/8thlight/block_watcher/pkg/ipfs"
-	"github.com/vulcanize/vulcanizedb/pkg/datastore"
 )
 
 const (
@@ -17,7 +16,6 @@ const (
 
 type Transformer struct {
 	db.Database
-	datastore.BlockRepository
 	ipfs.Publisher
 }
 
@@ -36,11 +34,7 @@ func (ee ExecuteError) Error() string {
 
 func (t Transformer) Execute(startingBlockNumber int64, endingBlockNumber int64) error {
 	for i := startingBlockNumber; i <= endingBlockNumber; i++ {
-		block, err := t.BlockRepository.GetBlock(i)
-		if err != nil {
-			return NewExecuteError(GetVulcanizeBlockErr, err)
-		}
-		blockData, err := t.Database.Get(block)
+		blockData, err := t.Database.Get(i)
 		if err != nil {
 			return NewExecuteError(GetBlockRlpErr, err)
 		}
@@ -53,6 +47,6 @@ func (t Transformer) Execute(startingBlockNumber int64, endingBlockNumber int64)
 	return nil
 }
 
-func NewTransformer(blockRepository datastore.BlockRepository, ethDB db.Database, publisher ipfs.Publisher) *Transformer {
-	return &Transformer{BlockRepository: blockRepository, Database: ethDB, Publisher: publisher}
+func NewTransformer(ethDB db.Database, publisher ipfs.Publisher) *Transformer {
+	return &Transformer{Database: ethDB, Publisher: publisher}
 }

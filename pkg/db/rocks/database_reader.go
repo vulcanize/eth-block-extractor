@@ -7,28 +7,41 @@ import (
 	"github.com/tecbot/gorocksdb"
 )
 
+const (
+	ColHeadersIndex = 2
+	ColExtraIndex   = 4
+)
+
 type Reader interface {
+	GetBlockHash(key []byte) ([]byte, error)
 	GetBlockHeader(key []byte) ([]byte, error)
 	OpenDatabaseForReadOnlyColumnFamilies(name string) error
 }
 
-// wraps gorocksdb calls
 type RDBReader struct {
 	rdb  *gorocksdb.DB
 	cfhs []*gorocksdb.ColumnFamilyHandle
 }
 
+func (rdbr *RDBReader) GetBlockHash(key []byte) ([]byte, error) {
+	return rdbr.GetFromDB(rdbr.cfhs[ColExtraIndex], key)
+}
+
 func (rdbr *RDBReader) GetBlockHeader(key []byte) ([]byte, error) {
+	return rdbr.GetFromDB(rdbr.cfhs[ColHeadersIndex], key)
+}
+
+func (rdbr *RDBReader) GetFromDB(column *gorocksdb.ColumnFamilyHandle, key []byte) ([]byte, error) {
 	readOptions := gorocksdb.NewDefaultReadOptions()
 	defer readOptions.Destroy()
-	data, err := rdbr.rdb.GetCF(readOptions, rdbr.cfhs[2], key)
+	data, err := rdbr.rdb.GetCF(readOptions, column, key)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Could not read from Rocks DB: %s", err.Error()))
 	}
-	toReturn := make([]byte, len(data.Data()))
-	copy(toReturn, data.Data())
+	result := make([]byte, len(data.Data()))
+	copy(result, data.Data())
 	data.Free()
-	return toReturn, nil
+	return result, nil
 }
 
 func (rdbr *RDBReader) OpenDatabaseForReadOnlyColumnFamilies(name string) error {

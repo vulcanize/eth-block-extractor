@@ -6,8 +6,9 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
-// Wraps go-ethereum/core: GetHeaderRLP
+// Wraps go-ethereum db operations
 type Reader interface {
+	GetCanonicalHash(number uint64) common.Hash
 	GetHeaderRLP(hash common.Hash, number uint64) rlp.RawValue
 }
 
@@ -17,6 +18,10 @@ type LDBReader struct {
 
 func NewLevelDatabaseReader(reader core.DatabaseReader) *LDBReader {
 	return &LDBReader{DatabaseReader: reader}
+}
+
+func (ldbr *LDBReader) GetCanonicalHash(number uint64) common.Hash {
+	return core.GetCanonicalHash(ldbr.DatabaseReader, number)
 }
 
 func (ldbr *LDBReader) GetHeaderRLP(hash common.Hash, number uint64) rlp.RawValue {

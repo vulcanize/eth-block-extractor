@@ -7,19 +7,14 @@ import (
 	"github.com/8thlight/block_watcher/pkg/db/level"
 	"github.com/8thlight/block_watcher/test_helpers"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/vulcanize/vulcanizedb/pkg/core"
 )
 
 var _ = Describe("LevelDatabase", func() {
 	It("invokes the level database reader to query for block data", func() {
 		mockLevelDBReader := test_helpers.NewMockLevelDatabaseReader()
 		db := level.NewLevelDatabase(mockLevelDBReader)
-		block := core.Block{
-			Hash:   "abcde",
-			Number: 123456,
-		}
 
-		_, err := db.Get(block)
+		_, err := db.Get(12345)
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(mockLevelDBReader.Called).To(BeTrue())
@@ -27,19 +22,15 @@ var _ = Describe("LevelDatabase", func() {
 
 	It("converts block data to required format", func() {
 		mockLevelDBReader := test_helpers.NewMockLevelDatabaseReader()
+		hash := common.HexToHash("abcde")
+		mockLevelDBReader.SetReturnHash(hash)
 		db := level.NewLevelDatabase(mockLevelDBReader)
-		hash := "abcde"
 		num := int64(123456)
-		block := core.Block{
-			Hash:   hash,
-			Number: num,
-		}
 
-		_, err := db.Get(block)
+		_, err := db.Get(num)
 
 		Expect(err).NotTo(HaveOccurred())
-		expectedHash := common.HexToHash(hash)
-		Expect(mockLevelDBReader.PassedHash).To(Equal(expectedHash))
+		Expect(mockLevelDBReader.PassedHash).To(Equal(hash))
 		expectedBlockNumber := uint64(num)
 		Expect(mockLevelDBReader.PassedNumber).To(Equal(expectedBlockNumber))
 	})

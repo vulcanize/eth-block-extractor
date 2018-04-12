@@ -1,10 +1,5 @@
 package level
 
-import (
-	"github.com/ethereum/go-ethereum/common"
-	vulcCore "github.com/vulcanize/vulcanizedb/pkg/core"
-)
-
 // Implements Database interface for LevelDB
 type LevelDatabase struct {
 	Reader
@@ -16,8 +11,8 @@ func NewLevelDatabase(ldbReader Reader) *LevelDatabase {
 	}
 }
 
-func (l LevelDatabase) Get(block vulcCore.Block) ([]byte, error) {
-	blockHash := common.HexToHash(block.Hash)
-	blockNumber := uint64(block.Number)
-	return l.Reader.GetHeaderRLP(blockHash, blockNumber), nil
+func (l LevelDatabase) Get(blockNumber int64) ([]byte, error) {
+	n := uint64(blockNumber)
+	blockHash := l.Reader.GetCanonicalHash(n)
+	return l.Reader.GetHeaderRLP(blockHash, n), nil
 }

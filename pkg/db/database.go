@@ -7,7 +7,6 @@ import (
 	"github.com/8thlight/block_watcher/pkg/db/level"
 	"github.com/8thlight/block_watcher/pkg/db/rocks"
 	"github.com/ethereum/go-ethereum/ethdb"
-	vulcCore "github.com/vulcanize/vulcanizedb/pkg/core"
 )
 
 var ErrNoSuchDb = errors.New("No such database")
@@ -22,7 +21,7 @@ func (re ReadError) Error() string {
 }
 
 type Database interface {
-	Get(block vulcCore.Block) ([]byte, error)
+	Get(blockNumber int64) ([]byte, error)
 }
 
 func CreateDatabase(config DatabaseConfig) (Database, error) {

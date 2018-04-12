@@ -18,9 +18,6 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
-	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
-	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres/repositories"
-	"github.com/vulcanize/vulcanizedb/pkg/geth"
 
 	"github.com/8thlight/block_watcher/pkg"
 	"github.com/8thlight/block_watcher/pkg/db"
@@ -52,21 +49,6 @@ func init() {
 }
 
 func createIpldForBlock() {
-	// init blockchain
-	blockchain := geth.NewBlockchain(ipc)
-	if blockchain.LastBlock().Int64() == 0 {
-		log.Fatal("geth initial: state sync not finished")
-	}
-
-	// init pg db with blockchain
-	pgDB, err := postgres.NewDB(databaseConfig, blockchain.Node())
-	if err != nil {
-		log.Fatal("Error connecting to postgres db: ", err)
-	}
-
-	// init block repository with pg db
-	blockRepository := repositories.BlockRepository{DB: pgDB}
-
 	// init eth db
 	var ethDBConfig db.DatabaseConfig
 	if useParity {
@@ -89,7 +71,7 @@ func createIpldForBlock() {
 	publisher := ipfs.NewIpfsPublisher(dagPutter)
 
 	// execute transformer
-	transformer := pkg.NewTransformer(blockRepository, ethDB, publisher)
+	transformer := pkg.NewTransformer(ethDB, publisher)
 	err = transformer.Execute(blockNumber, blockNumber)
 	if err != nil {
 		log.Fatal("Error executing transformer: ", err.Error())

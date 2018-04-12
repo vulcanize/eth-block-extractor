@@ -1,10 +1,8 @@
 package test_helpers
 
-import "github.com/vulcanize/vulcanizedb/pkg/core"
-
 type MockDatabase struct {
 	CalledCount  int
-	PassedBlocks []core.Block
+	PassedBlocks []int64
 	ReturnBytes  [][]byte
 	Err          error
 }
@@ -26,9 +24,9 @@ func (md *MockDatabase) SetError(err error) {
 	md.Err = err
 }
 
-func (md *MockDatabase) Get(block core.Block) ([]byte, error) {
+func (md *MockDatabase) Get(blockNumber int64) ([]byte, error) {
 	md.CalledCount++
-	md.PassedBlocks = append(md.PassedBlocks, block)
+	md.PassedBlocks = append(md.PassedBlocks, blockNumber)
 	if md.Err != nil {
 		return nil, md.Err
 	}
