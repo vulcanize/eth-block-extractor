@@ -5,4 +5,4 @@ port = 5432
 
 [client]
 ipcPath = "https://mainnet.infura.io/J5Vd2fRtGsw0zZ0Ov3BL"
-levelDbPath = "/Users/robertmulholand/Library/Ethereum/geth/chaindata"
+levelDbPath = <local node's levelDB filepath>

@@ -1,8 +1,0 @@
-[database]
-name = "vulcanize_public"
-hostname = "localhost"
-port = 5432
-
-[client]
-ipcPath = "/Users/robertmulholand/Library/Ethereum/geth.ipc"
-levelDbPath = "/Users/robertmulholand/Library/Ethereum/geth/chaindata"

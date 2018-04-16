@@ -1,16 +1,52 @@
 # Block Watcher
 
 ## Description
-Tool for converting Ethereum blocks into IPLDs
+A [VulcanizeDB](https://github.com/vulcanize/VulcanizeDB) transformer for creating IPLDs for Ethereum block data.
 
 ## Dependencies
-- Requires running [go-ipld-eth](https://github.com/ipfs/go-ipld-eth) for formatting of raw bytes into an eth-block (e.g. you need to be able to pass the `--input-enc raw --format eth-block` with `ipfs dag put`)
-    - on OS X, from the go-ipld-eth directory: `./plugin/hacks/osx.sh`
-- Requires Geth running LevelDB to fetch block data
+ - Go 1.9+
+ - Postgres 10
+ - Ethereum Node
+   - [Go Ethereum](https://ethereum.github.io/go-ethereum/downloads/) (1.8+)
+   - [Parity 1.8.11+](https://github.com/paritytech/parity/releases): *UNSUPPORTED*
+ - [IPFS](https://github.com/ipfs/go-ipfs#build-from-source)
+ - [go-ipld-eth](https://github.com/ipfs/go-ipld-eth) (Plugin enabling conversion of block headers to IPLDs in IPFS)
 
-## Setup
-- modify config file (`environments/public.toml` or desired alternative) to point to local IPC and level DB (`ipcPath` and `levelDbPath`)
-- NOTE: currently, the ipc path and level db path cannot be in the same directory, as the ipc requires geth to be running but accessing level DB requires that Geth not be using it :( - a simple workaround is to use `environments/infura.toml` for the time being
-- `make build`
-- Sync VulcanizeDB with required blocks
-- `./block_watcher createIpldForBlock -b <desired_block_number>`
+## Installation
+1. Setup Postgres and an Ethereum node - see [VulcanizeDB README](https://github.com/vulcanize/VulcanizeDB/blob/master/README.md).
+1. Sync VulcanizeDB to populate core block data (commands will read block data from VulcanizeDB to fetch and persist block RLP data).
+1. `git clone git@github.com:8thlight/block_watcher.git`
+
+  _note: `go get` does not work for this project because need to run the (fixlibcrypto)[https://github.com/8thlight/sai_watcher/blob/master/Makefile] command along with `go build`._
+1. Build:
+    ```
+    make build
+    ```
+
+## Configuration
+- To use a local Ethereum node, copy `environments/public.toml.example` to
+  `environments/public.toml` and update the `levelDbPath` to the local node's levelDB filepath:
+  - when using geth:
+    - The LevelDB file is called `chaindata`.
+    - The LevelDB file path is printed to the console when you start geth.
+    - The default location is:
+      - Mac: `$HOME/Library/Ethereum`
+      - Linux: `$HOME/.ethereum`
+
+## Running the createIpldForBlock command
+- This command creates an IPLD object for a single Ethereum block.
+- `./block_watcher createIpldForBlock --config <config.toml> --block-number <block-number>`
+- Note: all arguments are required
+
+## Running the createIpldForBlocks command
+- This command creates IPLDs objects for every block in a range of Ethereum blocks.
+- `./block_watcher createIpldForBlocks --config <config.toml> --starting-block-number <block-number> --ending-block-number <block-number>`
+- Note: all arguments are required, and ending block number must be greater than starting block number
+
+## Running the tests
+```
+ginkgo -r
+```
+
+## Errors
+- If you see the error, `Error executing transformer: Error writing to IPFS: Error persisting block data: exit status 1`, you probably still need to setup go-ipld-eth (see above).

@@ -1,3 +1,5 @@
+.DS_Store
 .idea
 blocks/*
 block_watcher
+environments/*.toml

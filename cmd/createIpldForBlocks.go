@@ -17,40 +17,41 @@ package cmd
 import (
 	"log"
 
-	"github.com/spf13/cobra"
-	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
-	"github.com/vulcanize/vulcanizedb/pkg/geth"
-
 	"github.com/8thlight/block_watcher/pkg"
 	"github.com/8thlight/block_watcher/pkg/db"
 	"github.com/8thlight/block_watcher/pkg/fs"
 	"github.com/8thlight/block_watcher/pkg/ipfs"
+	"github.com/spf13/cobra"
+	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres/repositories"
+	"github.com/vulcanize/vulcanizedb/pkg/geth"
 )
 
-// createIpldForBlockCmd represents the createIpldForBlock command
-var createIpldForBlockCmd = &cobra.Command{
-	Use:   "createIpldForBlock",
-	Short: "Create an IPLD object for a block.",
-	Long: `Create an IPLD object for a block.
+// createIpldForBlocksCmd represents the createIpldForBlocks command
+var createIpldForBlocksCmd = &cobra.Command{
+	Use:   "createIpldForBlocks",
+	Short: "Create IPLD objects for multiple blocks.",
+	Long: `Create IPLD objects for multiple blocks.
 
-e.g. ./block_watcher createIpldForBlock -b 1234567
+e.g. ./block_watcher createIpldForBlocks -s 1234567 -e 4567890
 
 Under the hood, the command fetches the block header RLP data from LevelDB and
-puts it in IPFS, converting the data as an 'eth-block'`,
+puts it in IPFS, converting the data as an 'eth-block'.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		createIpldForBlock()
+		createIpldForBlocks()
 	},
 }
 
-var blockNumber int64
+var startingBlockNumber int64
+var endingBlockNumber int64
 
 func init() {
-	rootCmd.AddCommand(createIpldForBlockCmd)
-	createIpldForBlockCmd.Flags().Int64VarP(&blockNumber, "block-number", "b", 0, "Block number to create IPLD for")
+	rootCmd.AddCommand(createIpldForBlocksCmd)
+	createIpldForBlocksCmd.Flags().Int64VarP(&startingBlockNumber, "starting-block-number", "s", 0, "First block number to create IPLD for")
+	createIpldForBlocksCmd.Flags().Int64VarP(&endingBlockNumber, "ending-block-number", "e", 5430000, "Last block number to create IPLD for")
 }
 
-func createIpldForBlock() {
+func createIpldForBlocks() {
 	// init blockchain
 	blockchain := geth.NewBlockchain(ipc)
 	if blockchain.LastBlock().Int64() == 0 {
@@ -80,7 +81,7 @@ func createIpldForBlock() {
 
 	// execute transformer
 	transformer := pkg.NewTransformer(blockRepository, ethDB, publisher)
-	err = transformer.Execute(blockNumber, blockNumber)
+	err = transformer.Execute(startingBlockNumber, endingBlockNumber)
 	if err != nil {
 		log.Fatal("Error executing transformer: ", err.Error())
 	}
