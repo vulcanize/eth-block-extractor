@@ -18,9 +18,8 @@ import (
 	"encoding/json"
 	"github.com/spf13/cobra"
 	"github.com/vulcanize/eth-block-extractor/pkg/ipfs"
-	"github.com/vulcanize/eth-block-extractor/pkg/ipfs/eth_block_header"
+	"github.com/vulcanize/eth-block-extractor/pkg/ipfs/factories"
 	"github.com/vulcanize/eth-block-extractor/pkg/wrappers/go-cid"
-	"github.com/vulcanize/eth-block-extractor/pkg/wrappers/go-ethereum/rlp"
 	"log"
 )
 
@@ -45,20 +44,27 @@ func init() {
 }
 
 func getIpld() {
-	// init ipfs deps
+	// init deps
 	getter, err := ipfs.InitIPFSNode(ipfsPath)
 	if err != nil {
 		log.Fatal("Error connecting to ipfs: ", err)
 	}
-	rlpDecoder := rlp.RlpDecoder{}
-	resolver := eth_block_header.NewBlockHeaderResolver(rlpDecoder)
 	cidDecoder := go_cid.NewCidDecoder()
+	decodedCid, err := cidDecoder.Decode(cid)
+	if err != nil {
+		log.Fatal("Cannot decode cid: ", err)
+	}
+	resolverFactory := factories.ResolverFactory{}
+	resolver, err := resolverFactory.GetResolver(decodedCid)
+	if err != nil {
+		log.Fatal("Cannot locate resolver for cid: ", err)
+	}
 
 	// init ipfs reader
-	reader := ipfs.NewIpldReader(cidDecoder, getter, resolver)
+	reader := ipfs.NewIpldReader(getter, resolver)
 
 	// fetch and print IPLD data
-	node, err := reader.Read(cid)
+	node, err := reader.Read(decodedCid)
 	if err != nil {
 		log.Fatal("Error reading cid: ", err)
 	}

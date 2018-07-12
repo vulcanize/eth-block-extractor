@@ -11,11 +11,11 @@ type BlockHeaderResolver struct {
 	decoder rlp.Decoder
 }
 
-func NewBlockHeaderResolver(decoder rlp.Decoder) *BlockHeaderResolver {
-	return &BlockHeaderResolver{decoder: decoder}
+func NewBlockHeaderResolver(decoder rlp.Decoder) BlockHeaderResolver {
+	return BlockHeaderResolver{decoder: decoder}
 }
 
-func (resolver *BlockHeaderResolver) Resolve(block blocks.Block) (format.Node, error) {
+func (resolver BlockHeaderResolver) Resolve(block blocks.Block) (format.Node, error) {
 	raw := block.RawData()
 	var header types.Header
 	err := resolver.decoder.Decode(raw, &header)
