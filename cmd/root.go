@@ -77,7 +77,6 @@ func init() {
 	viper.BindPFlag("client.ipcPath", rootCmd.PersistentFlags().Lookup("client-ipcPath"))
 	viper.BindPFlag("client.ipfsPath", rootCmd.PersistentFlags().Lookup("client-ipfsPath"))
 	viper.BindPFlag("client.levelDbPath", rootCmd.PersistentFlags().Lookup("client-levelDbPath"))
-
 }
 
 func initConfig() {
