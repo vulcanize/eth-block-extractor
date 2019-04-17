@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	logging "gx/ipfs/Qmbi1CTJsbnBZjCEgc2otwu8cUFPsGpzWXG7edVCLZ7Gvk/go-log"
-	ci "gx/ipfs/Qme1knMqwt1hKZbc1BmQFmnm9f36nyQGwXxPGVpVJ9rMK5/go-libp2p-crypto"
+	logging "github.com/ipfs/go-log"
+	ci "github.com/libp2p/go-libp2p-crypto"
 )
 
 var log = logging.Logger("keystore")

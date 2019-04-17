@@ -5,8 +5,10 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
+	raw "github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethdb"
+
 	"github.com/vulcanize/eth-block-extractor/pkg/db/level"
 	"github.com/vulcanize/eth-block-extractor/pkg/wrappers/core"
 	"github.com/vulcanize/eth-block-extractor/pkg/wrappers/core/rawdb"
@@ -38,7 +40,7 @@ type Database interface {
 func CreateDatabase(config DatabaseConfig) (Database, error) {
 	switch config.Type {
 	case Level:
-		levelDBConnection, err := ethdb.NewLDBDatabase(config.Path, 128, 1024)
+		levelDBConnection, err := raw.NewLevelDBDatabase(config.Path, 128, 1024, "eth-block-extractor")
 		if err != nil {
 			return nil, ReadError{msg: "Failed to connect to LevelDB", err: err}
 		}

@@ -2,6 +2,7 @@ package state
 
 import (
 	"github.com/ethereum/go-ethereum/core/state"
+
 	"github.com/vulcanize/eth-block-extractor/pkg/wrappers/trie"
 )
 

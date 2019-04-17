@@ -4,22 +4,17 @@ PKGS = go list ./... | grep -v "^vendor/"
 
 default: build
 
-GOVENDOR = $(BIN)/govendor
-$(BIN)/govendor:
-	go get -u github.com/kardianos/govendor
+DEP = $(BIN)/dep
+$(BIN)/dep:
+	go get -u github.com/golang/dep/cmd/dep
 
 GINKGO = $(BIN)/ginkgo
 $(BIN)/ginkgo:
 	go get -u github.com/onsi/ginkgo/ginkgo
 
-GX = $(BIN)/gx
-$(BIN)/gx:
-	go get -v -u github.com/whyrusleeping/gx
-	$(GX) install --global
-
 LINT = $(BIN)/golint
 $(BIN)/golint:
-	go get github.com/golang/lint/golint
+	go get golang.org/x/lint/golint
 
 METALINT = $(BIN)/gometalinter.v2
 $(BIN)/gometalinter.v2:
@@ -27,7 +22,7 @@ $(BIN)/gometalinter.v2:
 	$(METALINT) --install
 
 .PHONY: installtools
-installtools: | $(LINT) $(GINKGO) $(GX) $(GOVENDOR)
+installtools: | $(LINT) $(GINKGO) $(DEP)
 	echo "Installing tools"
 
 .PHONY: metalint
@@ -47,17 +42,10 @@ test: | $(GINKGO) $(LINT)
 	go fmt ./...
 	$(GINKGO) -r
 
-.PHONY: govendor
-dep: | $(GOVENDOR)
-	$(GOVENDOR) fetch -v +missing
+.PHONY: dep
+dep: | $(DEP)
+	$(DEP) ensure
 
-build: govendor fixlibcrypto
+build: dep
 	go fmt ./...
 	go build
-
-.PHONY: fixlibcrypto
-fixlibcrypto:
-	mkdir tmp-go-ethereum
-	git clone https://github.com/ethereum/go-ethereum.git tmp-go-ethereum
-	cp -r "tmp-go-ethereum/crypto/secp256k1/libsecp256k1" "vendor/github.com/ethereum/go-ethereum/crypto/secp256k1/"
-	rm -rf "tmp-go-ethereum"

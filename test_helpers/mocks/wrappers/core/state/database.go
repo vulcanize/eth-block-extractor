@@ -11,39 +11,28 @@ import (
 )
 
 type MockStateDatabase struct {
-	returnDB state.Database
-	trie     state_wrapper.GethTrie
+	ReturnDB   state.Database
+	ReturnTrie state_wrapper.GethTrie
 }
 
 func NewMockStateDatabase() *MockStateDatabase {
-	return &MockStateDatabase{
-		returnDB: nil,
-		trie:     nil,
-	}
+	return &MockStateDatabase{}
 }
 
 func (msdb *MockStateDatabase) CreateFakeUnderlyingDatabase() state.Database {
 	return &mockStateDatabase{}
 }
 
-func (msdb *MockStateDatabase) SetReturnDatabase(db state.Database) {
-	msdb.returnDB = db
-}
-
-func (msdb *MockStateDatabase) SetReturnTrie(trie state_wrapper.GethTrie) {
-	msdb.trie = trie
-}
-
 func (msdb *MockStateDatabase) Database() state.Database {
-	return msdb.returnDB
+	return msdb.ReturnDB
 }
 
 func (msdb *MockStateDatabase) OpenTrie(root common.Hash) (state_wrapper.GethTrie, error) {
-	return msdb.trie, nil
+	return msdb.ReturnTrie, nil
 }
 
 func (msdb *MockStateDatabase) TrieDB() trie_wrapper.GethTrieDatabase {
-	return msdb.returnDB.TrieDB()
+	return msdb.ReturnDB.TrieDB()
 }
 
 // implements state.GethStateDatabase interface for testing
@@ -72,7 +61,7 @@ func (*mockStateDatabase) OpenTrie(root common.Hash) (state.Trie, error) {
 
 func (*mockStateDatabase) TrieDB() *trie.Database {
 	trieDB := trie.NewDatabase(&mockEthDB{})
-	trieDB.Insert(test_helpers.FakeHash, test_helpers.FakeTrieNode)
+	trieDB.InsertBlob(test_helpers.FakeHash, test_helpers.FakeTrieNode)
 	return trieDB
 }
 
@@ -80,26 +69,42 @@ func (*mockStateDatabase) TrieDB() *trie.Database {
 type mockEthDB struct {
 }
 
-func (mockEthDB) Put(key []byte, value []byte) error {
+func (*mockEthDB) Put(key []byte, value []byte) error {
 	panic("implement me")
 }
 
-func (mockEthDB) Get(key []byte) ([]byte, error) {
+func (*mockEthDB) Get(key []byte) ([]byte, error) {
 	return []byte{1, 2, 3, 4, 5}, nil
 }
 
-func (mockEthDB) Has(key []byte) (bool, error) {
+func (*mockEthDB) Has(key []byte) (bool, error) {
 	panic("implement me")
 }
 
-func (mockEthDB) Delete(key []byte) error {
+func (*mockEthDB) Delete(key []byte) error {
 	panic("implement me")
 }
 
-func (mockEthDB) Close() {
+func (*mockEthDB) Close() error {
 	panic("implement me")
 }
 
-func (mockEthDB) NewBatch() ethdb.Batch {
+func (*mockEthDB) NewBatch() ethdb.Batch {
+	panic("implement me")
+}
+
+func (*mockEthDB) Compact([]byte, []byte) error {
+	panic("implement me")
+}
+
+func (*mockEthDB) NewIterator() ethdb.Iterator {
+	panic("implement me")
+}
+
+func (*mockEthDB) NewIteratorWithPrefix([]byte) ethdb.Iterator {
+	panic("implement me")
+}
+
+func (*mockEthDB) Stat(string) (string, error) {
 	panic("implement me")
 }

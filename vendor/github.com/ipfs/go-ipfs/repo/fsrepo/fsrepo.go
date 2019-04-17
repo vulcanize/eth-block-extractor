@@ -15,18 +15,18 @@ import (
 	keystore "github.com/ipfs/go-ipfs/keystore"
 	repo "github.com/ipfs/go-ipfs/repo"
 	"github.com/ipfs/go-ipfs/repo/common"
-	config "github.com/ipfs/go-ipfs/repo/config"
 	mfsr "github.com/ipfs/go-ipfs/repo/fsrepo/migrations"
-	serialize "github.com/ipfs/go-ipfs/repo/fsrepo/serialize"
 	dir "github.com/ipfs/go-ipfs/thirdparty/dir"
 
-	"github.com/ipfs/go-ipfs/Godeps/_workspace/src/github.com/mitchellh/go-homedir"
-
-	util "gx/ipfs/QmPdKqUcHGFdeSpvjVoaTRPPstGif9GBZb5Q56RVw9o69A/go-ipfs-util"
-	lockfile "gx/ipfs/QmQ7rzxiZbjc9tnBag9g89cHAwditrS9FUicRYR55dUzd1/go-fs-lock"
-	ma "gx/ipfs/QmUxSEGbv2nmYNnfXi7839wwQqTN3kwQeUxe8dTjZWZs7J/go-multiaddr"
-	measure "gx/ipfs/QmXez8SABR95KKKgU9XFtTTQ79QRn2nWS9o5pa1EcHsLs5/go-ds-measure"
-	logging "gx/ipfs/Qmbi1CTJsbnBZjCEgc2otwu8cUFPsGpzWXG7edVCLZ7Gvk/go-log"
+	ds "github.com/ipfs/go-datastore"
+	measure "github.com/ipfs/go-ds-measure"
+	lockfile "github.com/ipfs/go-fs-lock"
+	config "github.com/ipfs/go-ipfs-config"
+	serialize "github.com/ipfs/go-ipfs-config/serialize"
+	util "github.com/ipfs/go-ipfs-util"
+	logging "github.com/ipfs/go-log"
+	homedir "github.com/mitchellh/go-homedir"
+	ma "github.com/multiformats/go-multiaddr"
 )
 
 // LockFile is the filename of the repo lock, relative to config dir
@@ -175,8 +175,10 @@ func open(repoPath string) (repo.Repo, error) {
 		return nil, err
 	}
 
-	if r.config.Experimental.FilestoreEnabled {
+	if r.config.Experimental.FilestoreEnabled || r.config.Experimental.UrlstoreEnabled {
 		r.filemgr = filestore.NewFileManager(r.ds, filepath.Dir(r.path))
+		r.filemgr.AllowFiles = r.config.Experimental.FilestoreEnabled
+		r.filemgr.AllowUrls = r.config.Experimental.UrlstoreEnabled
 	}
 
 	keepLocked = true
@@ -474,9 +476,11 @@ func (r *FSRepo) Close() error {
 	return r.lockfile.Close()
 }
 
+// Config the current config. This function DOES NOT copy the config. The caller
+// MUST NOT modify it without first calling `Clone`.
+//
 // Result when not Open is undefined. The method may panic if it pleases.
 func (r *FSRepo) Config() (*config.Config, error) {
-
 	// It is not necessary to hold the package lock since the repo is in an
 	// opened state. The package lock is _not_ meant to ensure that the repo is
 	// thread-safe. The package lock is only meant to guard against removal and
@@ -544,11 +548,14 @@ func (r *FSRepo) setConfigUnsynced(updated *config.Config) error {
 	if err := serialize.WriteConfigFile(configFilename, mapconf); err != nil {
 		return err
 	}
-	*r.config = *updated // copy so caller cannot modify this private config
+	// Do not use `*r.config = ...`. This will modify the *shared* config
+	// returned by `r.Config`.
+	r.config = updated
 	return nil
 }
 
-// SetConfig updates the FSRepo's config.
+// SetConfig updates the FSRepo's config. The user must not modify the config
+// object after calling this method.
 func (r *FSRepo) SetConfig(updated *config.Config) error {
 
 	// packageLock is held to provide thread-safety.
@@ -672,29 +679,7 @@ func (r *FSRepo) Datastore() repo.Datastore {
 
 // GetStorageUsage computes the storage space taken by the repo in bytes
 func (r *FSRepo) GetStorageUsage() (uint64, error) {
-	pth, err := config.PathRoot()
-	if err != nil {
-		return 0, err
-	}
-
-	pth, err = filepath.EvalSymlinks(pth)
-	if err != nil {
-		log.Debugf("filepath.EvalSymlinks error: %s", err)
-		return 0, err
-	}
-
-	var du uint64
-	err = filepath.Walk(pth, func(p string, f os.FileInfo, err error) error {
-		if err != nil {
-			log.Debugf("filepath.Walk error: %s", err)
-			return nil
-		}
-		if f != nil {
-			du += uint64(f.Size())
-		}
-		return nil
-	})
-	return du, err
+	return ds.DiskUsage(r.Datastore())
 }
 
 func (r *FSRepo) SwarmKey() ([]byte, error) {

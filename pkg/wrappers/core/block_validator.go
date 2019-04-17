@@ -7,7 +7,7 @@ import (
 )
 
 type GethBlockValidator interface {
-	ValidateState(block, parent *types.Block, state *state.StateDB, receipts types.Receipts, usedGas uint64) error
+	ValidateState(block *types.Block, state *state.StateDB, receipts types.Receipts, usedGas uint64) error
 }
 
 type BlockValidator struct {
@@ -19,6 +19,6 @@ func NewBlockValidator(blockChain BlockChain) *BlockValidator {
 	return &BlockValidator{validator: validator}
 }
 
-func (sv *BlockValidator) ValidateState(block, parent *types.Block, state *state.StateDB, receipts types.Receipts, usedGas uint64) error {
-	return sv.validator.ValidateState(block, parent, state, receipts, usedGas)
+func (sv *BlockValidator) ValidateState(block *types.Block, state *state.StateDB, receipts types.Receipts, usedGas uint64) error {
+	return sv.validator.ValidateState(block, state, receipts, usedGas)
 }

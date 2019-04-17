@@ -20,7 +20,7 @@ type BlockChain struct {
 }
 
 func NewBlockChain(databaseConnection ethdb.Database) (*BlockChain, error) {
-	blockchain, err := core.NewBlockChain(databaseConnection, nil, params.MainnetChainConfig, ethash.NewFaker(), vm.Config{})
+	blockchain, err := core.NewBlockChain(databaseConnection, nil, params.MainnetChainConfig, ethash.NewFaker(), vm.Config{}, nil)
 	if err != nil {
 		return nil, err
 	}

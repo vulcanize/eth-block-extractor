@@ -9,17 +9,17 @@ import (
 	"sync"
 	"time"
 
-	config "github.com/ipfs/go-ipfs/repo/config"
 	math2 "github.com/ipfs/go-ipfs/thirdparty/math2"
-	lgbl "gx/ipfs/QmcBbMF4UyZFRTvH9S2h3rbSRBvvEGLqgt4sdvVugG8rX1/go-libp2p-loggables"
+	lgbl "github.com/libp2p/go-libp2p-loggables"
 
-	host "gx/ipfs/QmQQGtcp6nVUrQjNsnU53YWV1q8fK1Kd9S7FEkYbRZzxry/go-libp2p-host"
-	goprocess "gx/ipfs/QmSF8fPo3jgVBAy8fpdjjYqgG87dkJgUprRBHRd2tmfgpP/goprocess"
-	procctx "gx/ipfs/QmSF8fPo3jgVBAy8fpdjjYqgG87dkJgUprRBHRd2tmfgpP/goprocess/context"
-	periodicproc "gx/ipfs/QmSF8fPo3jgVBAy8fpdjjYqgG87dkJgUprRBHRd2tmfgpP/goprocess/periodic"
-	peer "gx/ipfs/QmVf8hTAsLLFtn4WPCRNdnaF2Eag2qTBS6uR8AiHPZARXy/go-libp2p-peer"
-	inet "gx/ipfs/QmXdgNhVEgjLxjUoMs5ViQL7pboAt3Y7V7eGHRiE4qrmTE/go-libp2p-net"
-	pstore "gx/ipfs/QmZhsmorLpD9kmQ4ynbAu4vbKv2goMUnXazwGA4gnWHDjB/go-libp2p-peerstore"
+	config "github.com/ipfs/go-ipfs-config"
+	goprocess "github.com/jbenet/goprocess"
+	procctx "github.com/jbenet/goprocess/context"
+	periodicproc "github.com/jbenet/goprocess/periodic"
+	host "github.com/libp2p/go-libp2p-host"
+	inet "github.com/libp2p/go-libp2p-net"
+	peer "github.com/libp2p/go-libp2p-peer"
+	pstore "github.com/libp2p/go-libp2p-peerstore"
 )
 
 // ErrNotEnoughBootstrapPeers signals that we do not have enough bootstrap
@@ -77,6 +77,12 @@ func Bootstrap(n *IpfsNode, cfg BootstrapConfig) (io.Closer, error) {
 	// make a signal to wait for one bootstrap round to complete.
 	doneWithRound := make(chan struct{})
 
+	if len(cfg.BootstrapPeers()) == 0 {
+		// We *need* to bootstrap but we have no bootstrap peers
+		// configured *at all*, inform the user.
+		log.Warning("no bootstrap nodes configured: go-ipfs may have difficulty connecting to the network")
+	}
+
 	// the periodic bootstrap function -- the connection supervisor
 	periodic := func(worker goprocess.Process) {
 		ctx := procctx.OnClosingContext(worker)
@@ -117,7 +123,6 @@ func bootstrapRound(ctx context.Context, host host.Host, cfg BootstrapConfig) er
 	// get bootstrap peers from config. retrieving them here makes
 	// sure we remain observant of changes to client configuration.
 	peers := cfg.BootstrapPeers()
-
 	// determine how many bootstrap connections to open
 	connected := host.Network().Peers()
 	if len(connected) >= cfg.MinPeerThreshold {
