@@ -109,7 +109,8 @@
   revision = "935e0e8a636ca4ba70b713f3e38a19e1b77739e8"
 
 [[projects]]
-  digest = "1:fc21420c48e26a0de0beb5ba9a862205907d1f3621ca911021d4c18010633b1a"
+  branch = "rpc_statediffs_at_head"
+  digest = "1:2c0f4d6af078dff6a80597f5c339a9b2b36bd67ec2aff270a092888048b239ae"
   name = "github.com/ethereum/go-ethereum"
   packages = [
     ".",
@@ -147,7 +148,8 @@
     "trie",
   ]
   pruneopts = "T"
-  revision = "cd79bc61a983d6482579d12cdd239b37bbfa12ef"
+  revision = "79c9c5e59823b9b814d828a907e594d28509123b"
+  source = "github.com/vulcanize/go-ethereum"
 
 [[projects]]
   branch = "master"
@@ -1542,7 +1544,8 @@
   revision = "c3a204f8e96543bb0cc090385c001078f184fc46"
 
 [[projects]]
-  digest = "1:6a3fb8747ee066b4c391d4d590851b9d4b4a1fad83bcd0904479f9c57ccae13d"
+  branch = "syncAndPublish"
+  digest = "1:902deeaea32bc6f906ea4b25edf80b6666305f7d98ebfc6e2bde4722090671fe"
   name = "github.com/vulcanize/vulcanizedb"
   packages = [
     "pkg/config",
@@ -1554,8 +1557,7 @@
     "pkg/plugin/helpers",
   ]
   pruneopts = "UT"
-  revision = "c7a2e85d67bfdec66b192edd84f56c9314a5f52a"
-  version = "v0.0.1"
+  revision = "10307ff58f8b6f9cbaf73b7e3a77cfa0e531feba"
 
 [[projects]]
   branch = "master"
