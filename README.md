@@ -1,28 +1,26 @@
 # Eth Block Extractor
 
 [![Build Status](https://travis-ci.org/vulcanize/eth-block-extractor.svg?branch=master)](https://travis-ci.org/vulcanize/eth-block-extractor)
+[![Go Report Card](https://goreportcard.com/badge/github.com/vulcanize/eth-block-extractor)](https://goreportcard.com/report/github.com/vulcanize/eth-block-extractor)
 
 ## Description
 A [VulcanizeDB](https://github.com/vulcanize/VulcanizeDB) transformer for creating IPLDs for Ethereum block data.
 
 ## Dependencies
- - Go 1.9+
+ - Go 1.12
  - Postgres 10
  - Ethereum Node
-   - [Go Ethereum](https://ethereum.github.io/go-ethereum/downloads/) (1.8+)
+   - [Go Ethereum](https://ethereum.github.io/go-ethereum/downloads/) (1.8.23+)
  - [IPFS](https://github.com/ipfs/go-ipfs#build-from-source)
  - [go-ipld-eth](https://github.com/ipfs/go-ipld-eth) (Plugin enabling conversion of block headers to IPLDs in IPFS)
 
 ## Installation
-1. Setup Postgres and an Ethereum node - see [VulcanizeDB README](https://github.com/vulcanize/VulcanizeDB/blob/master/README.md).
+1. Setup Postgres and an Ethereum node - see [VulcanizeDB README](https://github.com/vulcanize/VulcanizeDB/blob/staging/README.md).
 1. Sync VulcanizeDB to populate core block data (commands will read block data from VulcanizeDB to fetch and persist block RLP data).
-1. `git clone git@github.com:vulcanize/eth-block-extractor.git`
-
-  _note: `go get` does not work for this project because need to run the (fixlibcrypto)[https://github.com/vulcanize/eth-block-extractor/blob/master/Makefile] command along with `go build`._
-1. Build:
-    ```
-    make build
-    ```
+1. `go get github.com/vulcanize/eth-block-extractor`
+1. `cd $GOPATH/src/github.com/vulcanize/eth-block-extractor`
+1. `dep ensure`
+1. `make build`
 
 ## Configuration
 - To use a local Ethereum node, copy `environments/public.toml.example` to
@@ -71,6 +69,10 @@ A [VulcanizeDB](https://github.com/vulcanize/VulcanizeDB) transformer for creati
   - Ending block number must be greater than starting block number.
 
 ## Running the tests
+```
+make test
+```
+or
 ```
 ginkgo -r
 ```

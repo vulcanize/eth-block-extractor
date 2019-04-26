@@ -20,4 +20,10 @@ var (
 		CodeHash: common.HexToHash("0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470").Bytes(),
 		Root:     common.HexToHash("0x821e2556a290c86405f8160a2d662042a431ba456b9db265c79bb837c04be5f0"),
 	})
+	FakeStateAccount = state.Account{
+		Nonce:    0,
+		Balance:  big.NewInt(10000),
+		CodeHash: common.HexToHash("0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470").Bytes(),
+		Root:     common.HexToHash("0x821e2556a290c86405f8160a2d662042a431ba456b9db265c79bb837c04be5f0"),
+	}
 )

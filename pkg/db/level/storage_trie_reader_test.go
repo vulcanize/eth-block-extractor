@@ -2,7 +2,6 @@ package level_test
 
 import (
 	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/rlp"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -24,13 +23,11 @@ var _ = Describe("Storage trie reader", func() {
 		mockTrie.SetReturnIterator(mockIteratror)
 		db.ReturnTrie = mockTrie
 		decoder := mock_rlp.NewMockDecoder()
-		acct := new(state.Account)
-		err := rlp.DecodeBytes(test_helpers.FakeStateLeaf, acct)
-		Expect(err).NotTo(HaveOccurred())
+		acct := &test_helpers.FakeStateAccount
 		decoder.SetReturnOut(acct)
 		reader := level.NewStorageTrieReader(db, decoder)
 
-		_, err = reader.GetStorageTrie(test_helpers.FakeStateLeaf)
+		_, err := reader.GetStorageTrie(test_helpers.FakeStateLeaf)
 
 		Expect(err).NotTo(HaveOccurred())
 		decoder.AssertDecodeCalledWith(test_helpers.FakeStateLeaf, &state.Account{})
@@ -45,8 +42,7 @@ var _ = Describe("Storage trie reader", func() {
 		mockTrie.SetReturnIterator(mockIteratror)
 		db.ReturnTrie = mockTrie
 		decoder := mock_rlp.NewMockDecoder()
-		acct := new(state.Account)
-		err := rlp.DecodeBytes(test_helpers.FakeStateLeaf, acct)
+		acct := &test_helpers.FakeStateAccount
 		decoder.SetReturnOut(acct)
 		reader := level.NewStorageTrieReader(db, decoder)
 
@@ -66,8 +62,7 @@ var _ = Describe("Storage trie reader", func() {
 		mockTrie.SetReturnIterator(mockIteratror)
 		db.ReturnTrie = mockTrie
 		decoder := mock_rlp.NewMockDecoder()
-		acct := new(state.Account)
-		err := rlp.DecodeBytes(test_helpers.FakeStateLeaf, acct)
+		acct := &test_helpers.FakeStateAccount
 		decoder.SetReturnOut(acct)
 		reader := level.NewStorageTrieReader(db, decoder)
 
