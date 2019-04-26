@@ -14,11 +14,11 @@ var _ = Describe("State trie reader", func() {
 	It("fetches node associated with state root", func() {
 		db := state.NewMockStateDatabase()
 		trieDB := db.CreateFakeUnderlyingDatabase()
-		db.SetReturnDatabase(trieDB)
+		db.ReturnDB = trieDB
 		mockIteratror := trie.NewMockIterator(0)
 		mockTrie := state.NewMockTrie()
 		mockTrie.SetReturnIterator(mockIteratror)
-		db.SetReturnTrie(mockTrie)
+		db.ReturnTrie = mockTrie
 		mockStorageTrieReader := level_wrapper.NewMockStorageTrieReader()
 		reader := level.NewStateTrieReader(db, mockStorageTrieReader)
 
@@ -31,11 +31,12 @@ var _ = Describe("State trie reader", func() {
 	It("returns nodes found traversing state trie", func() {
 		db := state.NewMockStateDatabase()
 		trieDB := db.CreateFakeUnderlyingDatabase()
-		db.SetReturnDatabase(trieDB)
+		db.ReturnDB = trieDB
 		mockIteratror := trie.NewMockIterator(2)
+		mockIteratror.SetReturnHash(test_helpers.FakeHash)
 		mockTrie := state.NewMockTrie()
 		mockTrie.SetReturnIterator(mockIteratror)
-		db.SetReturnTrie(mockTrie)
+		db.ReturnTrie = mockTrie
 		mockStorageTrieReader := level_wrapper.NewMockStorageTrieReader()
 		reader := level.NewStateTrieReader(db, mockStorageTrieReader)
 
@@ -49,12 +50,12 @@ var _ = Describe("State trie reader", func() {
 	It("invokes storage trie reader for state trie leaf nodes", func() {
 		db := state.NewMockStateDatabase()
 		trieDB := db.CreateFakeUnderlyingDatabase()
-		db.SetReturnDatabase(trieDB)
+		db.ReturnDB = trieDB
 		mockIteratror := trie.NewMockIterator(1)
 		mockIteratror.SetIncludeLeaf()
 		mockTrie := state.NewMockTrie()
 		mockTrie.SetReturnIterator(mockIteratror)
-		db.SetReturnTrie(mockTrie)
+		db.ReturnTrie = mockTrie
 		mockStorageTrieReader := level_wrapper.NewMockStorageTrieReader()
 		reader := level.NewStateTrieReader(db, mockStorageTrieReader)
 

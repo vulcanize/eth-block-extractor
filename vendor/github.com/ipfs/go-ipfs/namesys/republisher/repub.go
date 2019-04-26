@@ -7,16 +7,16 @@ import (
 
 	keystore "github.com/ipfs/go-ipfs/keystore"
 	namesys "github.com/ipfs/go-ipfs/namesys"
-	pb "github.com/ipfs/go-ipfs/namesys/pb"
-	path "github.com/ipfs/go-ipfs/path"
+	path "github.com/ipfs/go-path"
 
-	goprocess "gx/ipfs/QmSF8fPo3jgVBAy8fpdjjYqgG87dkJgUprRBHRd2tmfgpP/goprocess"
-	gpctx "gx/ipfs/QmSF8fPo3jgVBAy8fpdjjYqgG87dkJgUprRBHRd2tmfgpP/goprocess/context"
-	peer "gx/ipfs/QmVf8hTAsLLFtn4WPCRNdnaF2Eag2qTBS6uR8AiHPZARXy/go-libp2p-peer"
-	proto "gx/ipfs/QmZ4Qi3GaRbjcx28Sme5eMH7RQjGkt8wHxt2a65oLaeFEV/gogo-protobuf/proto"
-	logging "gx/ipfs/Qmbi1CTJsbnBZjCEgc2otwu8cUFPsGpzWXG7edVCLZ7Gvk/go-log"
-	ic "gx/ipfs/Qme1knMqwt1hKZbc1BmQFmnm9f36nyQGwXxPGVpVJ9rMK5/go-libp2p-crypto"
-	ds "gx/ipfs/QmeiCcJfDW1GJnWUArudsv5rQsihpi4oyddPhdqo3CfX6i/go-datastore"
+	proto "github.com/gogo/protobuf/proto"
+	ds "github.com/ipfs/go-datastore"
+	pb "github.com/ipfs/go-ipns/pb"
+	logging "github.com/ipfs/go-log"
+	goprocess "github.com/jbenet/goprocess"
+	gpctx "github.com/jbenet/goprocess/context"
+	ic "github.com/libp2p/go-libp2p-crypto"
+	peer "github.com/libp2p/go-libp2p-peer"
 )
 
 var errNoEntry = errors.New("no previous entry")
@@ -72,7 +72,7 @@ func (rp *Republisher) Run(proc goprocess.Process) {
 			timer.Reset(rp.Interval)
 			err := rp.republishEntries(proc)
 			if err != nil {
-				log.Error("Republisher failed to republish: ", err)
+				log.Info("republisher failed to republish: ", err)
 				if FailureRetryInterval < rp.Interval {
 					timer.Reset(FailureRetryInterval)
 				}
@@ -141,7 +141,7 @@ func (rp *Republisher) republishEntry(ctx context.Context, priv ic.PrivKey) erro
 
 func (rp *Republisher) getLastVal(id peer.ID) (path.Path, error) {
 	// Look for it locally only
-	vali, err := rp.ds.Get(namesys.IpnsDsKey(id))
+	val, err := rp.ds.Get(namesys.IpnsDsKey(id))
 	switch err {
 	case nil:
 	case ds.ErrNotFound:
@@ -149,8 +149,6 @@ func (rp *Republisher) getLastVal(id peer.ID) (path.Path, error) {
 	default:
 		return "", err
 	}
-
-	val := vali.([]byte)
 
 	e := new(pb.IpnsEntry)
 	if err := proto.Unmarshal(val, e); err != nil {

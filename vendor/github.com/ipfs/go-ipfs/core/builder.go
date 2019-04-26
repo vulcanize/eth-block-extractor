@@ -5,32 +5,39 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"github.com/ipfs/go-ipfs/provider"
 	"os"
 	"syscall"
 	"time"
 
-	bserv "github.com/ipfs/go-ipfs/blockservice"
 	filestore "github.com/ipfs/go-ipfs/filestore"
-	dag "github.com/ipfs/go-ipfs/merkledag"
-	resolver "github.com/ipfs/go-ipfs/path/resolver"
+	namesys "github.com/ipfs/go-ipfs/namesys"
 	pin "github.com/ipfs/go-ipfs/pin"
 	repo "github.com/ipfs/go-ipfs/repo"
-	cfg "github.com/ipfs/go-ipfs/repo/config"
+	cidv0v1 "github.com/ipfs/go-ipfs/thirdparty/cidv0v1"
 	"github.com/ipfs/go-ipfs/thirdparty/verifbs"
-	uio "github.com/ipfs/go-ipfs/unixfs/io"
 
-	offline "gx/ipfs/QmPf114DXfa6TqGKYhBGR7EtXRho4rCJgwyA1xkuMY5vwF/go-ipfs-exchange-offline"
-	p2phost "gx/ipfs/QmQQGtcp6nVUrQjNsnU53YWV1q8fK1Kd9S7FEkYbRZzxry/go-libp2p-host"
-	metrics "gx/ipfs/QmRg1gKTHzc3CZXSKzem8aR4E3TubFhbgXwfVuWnSK5CC5/go-metrics-interface"
-	goprocessctx "gx/ipfs/QmSF8fPo3jgVBAy8fpdjjYqgG87dkJgUprRBHRd2tmfgpP/goprocess/context"
-	libp2p "gx/ipfs/QmUEAR2pS7fP1GPseS3i8MWFyENs7oDp4CZrgn8FCjbsBu/go-libp2p"
-	peer "gx/ipfs/QmVf8hTAsLLFtn4WPCRNdnaF2Eag2qTBS6uR8AiHPZARXy/go-libp2p-peer"
-	pstore "gx/ipfs/QmZhsmorLpD9kmQ4ynbAu4vbKv2goMUnXazwGA4gnWHDjB/go-libp2p-peerstore"
-	bstore "gx/ipfs/QmbaPGg81pvQiC5vTXtC9Jo8rdrWUjRaugH71WYNsgi6Ev/go-ipfs-blockstore"
-	ci "gx/ipfs/Qme1knMqwt1hKZbc1BmQFmnm9f36nyQGwXxPGVpVJ9rMK5/go-libp2p-crypto"
-	ds "gx/ipfs/QmeiCcJfDW1GJnWUArudsv5rQsihpi4oyddPhdqo3CfX6i/go-datastore"
-	retry "gx/ipfs/QmeiCcJfDW1GJnWUArudsv5rQsihpi4oyddPhdqo3CfX6i/go-datastore/retrystore"
-	dsync "gx/ipfs/QmeiCcJfDW1GJnWUArudsv5rQsihpi4oyddPhdqo3CfX6i/go-datastore/sync"
+	bserv "github.com/ipfs/go-blockservice"
+	ds "github.com/ipfs/go-datastore"
+	retry "github.com/ipfs/go-datastore/retrystore"
+	dsync "github.com/ipfs/go-datastore/sync"
+	bstore "github.com/ipfs/go-ipfs-blockstore"
+	cfg "github.com/ipfs/go-ipfs-config"
+	offline "github.com/ipfs/go-ipfs-exchange-offline"
+	offroute "github.com/ipfs/go-ipfs-routing/offline"
+	ipns "github.com/ipfs/go-ipns"
+	dag "github.com/ipfs/go-merkledag"
+	metrics "github.com/ipfs/go-metrics-interface"
+	resolver "github.com/ipfs/go-path/resolver"
+	uio "github.com/ipfs/go-unixfs/io"
+	goprocessctx "github.com/jbenet/goprocess/context"
+	libp2p "github.com/libp2p/go-libp2p"
+	ci "github.com/libp2p/go-libp2p-crypto"
+	p2phost "github.com/libp2p/go-libp2p-host"
+	peer "github.com/libp2p/go-libp2p-peer"
+	pstore "github.com/libp2p/go-libp2p-peerstore"
+	pstoremem "github.com/libp2p/go-libp2p-peerstore/pstoremem"
+	record "github.com/libp2p/go-libp2p-record"
 )
 
 type BuildCfg struct {
@@ -71,10 +78,10 @@ func (cfg *BuildCfg) fillDefaults() error {
 
 	if cfg.Repo == nil {
 		var d ds.Datastore
-		d = ds.NewMapDatastore()
-
 		if cfg.NilRepo {
 			d = ds.NewNullDatastore()
+		} else {
+			d = ds.NewMapDatastore()
 		}
 		r, err := defaultRepo(dsync.MutexWrap(d))
 		if err != nil {
@@ -136,13 +143,15 @@ func NewNode(ctx context.Context, cfg *BuildCfg) (*IpfsNode, error) {
 	ctx = metrics.CtxScope(ctx, "ipfs")
 
 	n := &IpfsNode{
-		mode:      offlineMode,
+		IsOnline:  cfg.Online,
 		Repo:      cfg.Repo,
 		ctx:       ctx,
-		Peerstore: pstore.NewPeerstore(),
+		Peerstore: pstoremem.NewPeerstore(),
 	}
-	if cfg.Online {
-		n.mode = onlineMode
+
+	n.RecordValidator = record.NamespacedValidator{
+		"pk":   record.PublicKeyValidator{},
+		"ipns": ipns.Validator{KeyBook: n.Peerstore},
 	}
 
 	// TODO: this is a weird circular-ish dependency, rework it
@@ -166,8 +175,13 @@ func isTooManyFDError(err error) bool {
 }
 
 func setupNode(ctx context.Context, n *IpfsNode, cfg *BuildCfg) error {
-	// setup local peer ID (private key is loaded in online setup)
+	// setup local identity
 	if err := n.loadID(); err != nil {
+		return err
+	}
+
+	// load the private key (if present)
+	if err := n.loadPrivateKey(); err != nil {
 		return err
 	}
 
@@ -196,16 +210,22 @@ func setupNode(ctx context.Context, n *IpfsNode, cfg *BuildCfg) error {
 		opts.HasBloomFilterSize = 0
 	}
 
-	cbs, err := bstore.CachedBlockstore(ctx, bs, opts)
-	if err != nil {
-		return err
+	if !cfg.NilRepo {
+		bs, err = bstore.CachedBlockstore(ctx, bs, opts)
+		if err != nil {
+			return err
+		}
 	}
 
-	n.BaseBlocks = cbs
-	n.GCLocker = bstore.NewGCLocker()
-	n.Blockstore = bstore.NewGCBlockstore(cbs, n.GCLocker)
+	bs = bstore.NewIdStore(bs)
 
-	if conf.Experimental.FilestoreEnabled {
+	bs = cidv0v1.NewBlockstore(bs)
+
+	n.BaseBlocks = bs
+	n.GCLocker = bstore.NewGCLocker()
+	n.Blockstore = bstore.NewGCBlockstore(bs, n.GCLocker)
+
+	if conf.Experimental.FilestoreEnabled || conf.Experimental.UrlstoreEnabled {
 		// hash security
 		n.Filestore = filestore.NewFilestore(bs, n.Repo.FileManager())
 		n.Blockstore = bstore.NewGCBlockstore(n.Filestore, n.GCLocker)
@@ -238,6 +258,8 @@ func setupNode(ctx context.Context, n *IpfsNode, cfg *BuildCfg) error {
 		}
 	} else {
 		n.Exchange = offline.Exchange(n.Blockstore)
+		n.Routing = offroute.NewOfflineRouter(n.Repo.Datastore(), n.RecordValidator)
+		n.Namesys = namesys.NewNameSystem(n.Routing, n.Repo.Datastore(), 0)
 	}
 
 	n.Blocks = bserv.New(n.Blockstore, n.Exchange)
@@ -253,6 +275,13 @@ func setupNode(ctx context.Context, n *IpfsNode, cfg *BuildCfg) error {
 		n.Pinning = pin.NewPinner(n.Repo.Datastore(), n.DAG, internalDag)
 	}
 	n.Resolver = resolver.NewBasicResolver(n.DAG)
+
+	// Provider
+	queue, err := provider.NewQueue(ctx, "provider-v1", n.Repo.Datastore())
+	if err != nil {
+		return err
+	}
+	n.Provider = provider.NewProvider(ctx, queue, n.Routing)
 
 	if cfg.Online {
 		if err := n.startLateOnlineServices(ctx); err != nil {

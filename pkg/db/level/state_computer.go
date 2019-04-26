@@ -34,15 +34,15 @@ func (sc *StateComputer) ComputeBlockStateTrie(block, parent *types.Block) (root
 	if err != nil {
 		return root, err
 	}
-	return sc.createStateTrieForBlock(block, parent, stateTrie)
+	return sc.createStateTrieForBlock(block, stateTrie)
 }
 
-func (sc *StateComputer) createStateTrieForBlock(block, parent *types.Block, stateTrie state.GethStateDB) (root common.Hash, err error) {
+func (sc *StateComputer) createStateTrieForBlock(block *types.Block, stateTrie state.GethStateDB) (root common.Hash, err error) {
 	receipts, _, usedGas, err := sc.processor.Process(block, stateTrie.StateDB())
 	if err != nil {
 		return root, err
 	}
-	err = sc.validator.ValidateState(block, parent, stateTrie.StateDB(), receipts, usedGas)
+	err = sc.validator.ValidateState(block, stateTrie.StateDB(), receipts, usedGas)
 	if err != nil {
 		return root, err
 	}

@@ -20,7 +20,7 @@ var _ = Describe("", func() {
 	It("initializes state trie at parent block's root", func() {
 		chain, db, processor, trieFactory, validator := getMocks()
 		fakeDB := db.CreateFakeUnderlyingDatabase()
-		db.SetReturnDatabase(fakeDB)
+		db.ReturnDB = fakeDB
 		computer := level.NewStateComputer(chain, db, processor, trieFactory, validator)
 		currentBlock, parentBlock := getFakeBlocks()
 
@@ -85,7 +85,7 @@ var _ = Describe("", func() {
 		_, err := computer.ComputeBlockStateTrie(currentBlock, parentBlock)
 
 		Expect(err).NotTo(HaveOccurred())
-		validator.AssertValidateStateCalledWith(currentBlock, parentBlock, fakeStateDB, fakeReceipts, fakeUsedGas)
+		validator.AssertValidateStateCalledWith(currentBlock, fakeStateDB, fakeReceipts, fakeUsedGas)
 	})
 
 	It("returns error if validating state fails", func() {
@@ -134,7 +134,7 @@ var _ = Describe("", func() {
 		fakeIterator.SetReturnHash(test_helpers.FakeHash)
 		fakeTrie := state_wrapper.NewMockTrie()
 		fakeTrie.SetReturnIterator(fakeIterator)
-		db.SetReturnTrie(fakeTrie)
+		db.ReturnTrie = fakeTrie
 		currentBlock, parentBlock := getFakeBlocks()
 
 		stateRoot, err := computer.ComputeBlockStateTrie(currentBlock, parentBlock)
@@ -148,11 +148,11 @@ func getMocks() (*core.MockBlockChain, *state_wrapper.MockStateDatabase, *core.M
 	chain := core.NewMockBlockChain()
 	db := state_wrapper.NewMockStateDatabase()
 	fakeDB := db.CreateFakeUnderlyingDatabase()
-	db.SetReturnDatabase(fakeDB)
+	db.ReturnDB = fakeDB
 	fakeIterator := trie.NewMockIterator(1)
 	fakeTrie := state_wrapper.NewMockTrie()
 	fakeTrie.SetReturnIterator(fakeIterator)
-	db.SetReturnTrie(fakeTrie)
+	db.ReturnTrie = fakeTrie
 	processor := core.NewMockProcessor()
 	trieFactory := state_wrapper.NewMockStateDBFactory()
 	stateTrie := state_wrapper.NewMockStateDB()
