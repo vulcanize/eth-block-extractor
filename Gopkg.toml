@@ -31,7 +31,8 @@
 
 [[constraint]]
   name = "github.com/ipfs/go-ipfs"
-  version = "0.4.20"
+  source = "github.com/vulcanize/go-ipfs"
+  branch = "postgres_update"
 
 [[constraint]]
   name = "github.com/ipfs/go-ipld-format"
