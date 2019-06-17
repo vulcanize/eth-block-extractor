@@ -69,6 +69,10 @@ func (*mockStateDatabase) TrieDB() *trie.Database {
 type mockEthDB struct {
 }
 
+func (db *mockEthDB) NewIteratorWithStart(start []byte) ethdb.Iterator {
+	panic("implement me")
+}
+
 func (*mockEthDB) Put(key []byte, value []byte) error {
 	panic("implement me")
 }

@@ -30,7 +30,7 @@ func (accessor *AccessorsChain) GetBlock(hash common.Hash, number uint64) *types
 }
 
 func (accessor *AccessorsChain) GetBlockReceipts(hash common.Hash, number uint64) types.Receipts {
-	return rawdb.ReadReceipts(accessor.ethDbConnection, hash, number)
+	return rawdb.ReadReceipts(accessor.ethDbConnection, hash, number, nil)
 }
 
 func (accessor *AccessorsChain) GetBody(hash common.Hash, number uint64) *types.Body {
